@@ -1,0 +1,23 @@
+模块：
+
+A.爬取首页，入库到season
+
+    定义Item
+    解析首页，生成Item
+    Pipeline入库
+    解析Season
+
+B.爬取Season页，入库到episod
+
+    定义Item
+    解析首页，生成Item:
+        各字段对应进行格式化处理
+        外键的id查找
+    Pipeline入库
+    Episode
+
+C.爬取Episod页，入库到song
+    定义Item
+    解析首页，生成Item
+    Pipeline入库
+    解析Song
