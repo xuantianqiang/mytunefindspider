@@ -24,16 +24,45 @@ class MyItemLoader(ItemLoader):
     #自定义Season的ItemLoader
     default_output_processor = TakeFirst()
 
-
 import re
 def get_nums(value):
     #找出数字返回，默认为0
     nums_match = re.match('.*(\d+)',value)
     if nums_match:
-        nums = int(nums_match.group(0))
+        nums = int(nums_match.group(1))
     else:
         nums = 0
     return nums
+
+
+class TuneItem(scrapy.Item):
+    '''
+        tunefind.tunes表
+    '''
+    songId = scrapy.Field()
+    songName = scrapy.Field()
+    episodeId = scrapy.Field(
+        input_processor = MapCompose(get_nums)
+    )
+    episodeName = scrapy.Field()
+    seasonId = scrapy.Field(
+        input_processor=MapCompose(get_nums)
+    )
+    showName = scrapy.Field()
+    artistsName = scrapy.Field()
+    songDesc = scrapy.Field()
+
+    def get_insert_sql(self):
+        insert_sql = '''
+            insert into tunes(songName, showName, seasonId, episodeId, episodeName, 
+            artistsName,songDesc) values(%s, %s, %s, %s, %s, %s, %s)
+        '''
+
+        params = (self["songName"], self["showName"], self["seasonId"], self["episodeId"],
+                  self["episodeName"], self["artistsName"], self["songDesc"],)
+
+        return insert_sql, params
+
 
 class SongSeasonItem(scrapy.Item):
     #剧的季信息

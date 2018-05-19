@@ -10,6 +10,7 @@ from TunefindSpider.items import MyItemLoader
 from TunefindSpider.items import SongSeasonItem
 from TunefindSpider.items import SongEpisodeItem
 from TunefindSpider.items import SongItem
+from TunefindSpider.items import TuneItem
 # import re
 # import datetime
 #
@@ -30,8 +31,69 @@ class SongSpider(scrapy.Spider):
                 :param response:
                 :return:
         '''
-        #直接对首页信息进行解析
-        yield Request(url=response.url, callback=self.parse_season)
+        # yield Request(url=response.url, callback=self.parse_all)
+
+        season_urls = response.css('.EpisodeListItem__title___32XUR a::attr(href)').extract()
+
+        for season_url in season_urls:
+            yield Request(url=parse.urljoin(response.url, season_url),
+                          callback=self.parse_seasons)
+
+
+    def parse_seasons(self, response):
+        '''
+        解析各季页面，得到各集的列表
+        :param response:
+        :return:
+        '''
+        episode_urls = response.css('.EpisodeListItem__title___32XUR a::attr(href)').extract()
+        for episode_url in episode_urls:
+            yield Request(url=parse.urljoin(response.url, episode_url),
+                          callback=self.parse_episodes)
+
+    def parse_episodes(self, response):
+        '''
+            解析各集页面，取到各字段，生成Item
+        :param response:
+        :return:
+        '''
+        '''解析标题'''
+        # 'S1 · E1 · Wolferton Splash'
+        episode_title = response.xpath("//h2[@class='EpisodePage__title___MiEq3']").xpath('string(.)').extract_first()
+        episode_title = episode_title.split(' · ') #['S1 ', ' E1 ', ' Wolferton Splash']
+
+        seasonId = episode_title[0]  #第几季
+        episodeId = episode_title[1]    #第几集
+        episodeName = episode_title[2]  #集名
+
+        show_Name = response.css(".TvHeader__title___33Oa3 a::text").extract_first()
+
+
+
+        '''解析歌曲列表'''
+        songNames =  response.css(".SongRow__container___3eT_L .SongTitle__heading___3kxXK a::text").extract()
+        artistsNames = response.css(".SongRow__container___3eT_L .SongEventRow__subtitle___3Qli4 a::text").extract()
+        songDescs = (response.xpath("//div[@class='SceneDescription__description___3Auqj']")).xpath(
+                             'string(.)').extract()
+
+
+        '''生成Item'''
+        for index in range(0, len(songNames)):
+
+            item_loader = MyItemLoader(item=TuneItem(), response=response)
+
+            item_loader.add_value("songName", songNames[index])
+            item_loader.add_value("seasonId",seasonId)
+            item_loader.add_value("episodeId", episodeId)
+            item_loader.add_value("episodeName", episodeName)
+            item_loader.add_value("showName", show_Name)
+            item_loader.add_value("artistsName", artistsNames[index])
+            item_loader.add_value("songDesc", songDescs[index])
+
+            tune_item = item_loader.load_item()
+
+            yield tune_item
+
 
 
     def parse_season(self,response):
@@ -94,8 +156,7 @@ class SongSpider(scrapy.Spider):
         episode_url_nodes = response.css('.MainList__item___2MKl8 h3 a::attr(href)').extract()
         for episode_url_node in episode_url_nodes:
             yield Request(url=parse.urljoin(response.url,episode_url_node),
-                            callback=self.parse_songs)
-
+                          callback=self.parse_songs)
 
     def parse_songs(self,response):
         '''
