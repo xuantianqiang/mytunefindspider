@@ -22,7 +22,8 @@ class SongSpider(scrapy.Spider):
 
     name = "songspider"
     allowed_domains = ["www.tunefind.com"]
-    start_urls = ['https://www.tunefind.com/show/the-crown/']
+    start_urls = ['https://www.tunefind.com/show/sherlock-uk/',
+                  'https://www.tunefind.com/show/game-of-thrones/']
 
 
     def parse(self, response):
