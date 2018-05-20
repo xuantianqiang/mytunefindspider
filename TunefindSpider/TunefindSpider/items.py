@@ -27,7 +27,7 @@ class MyItemLoader(ItemLoader):
 import re
 def get_nums(value):
     #找出数字返回，默认为0
-    nums_match = re.match('.*(\d+)',value)
+    nums_match = re.match('.*?(\d+)',value)
     if nums_match:
         nums = int(nums_match.group(1))
     else:
